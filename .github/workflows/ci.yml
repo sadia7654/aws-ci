@@ -1,19 +1,39 @@
-version: 0.2
+name: Build and Push to AWS ECR
 
-phases:
-  pre_build:
-    commands:
-      - echo Logging in to Amazon ECR...
-      - aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin 624858524166.dkr.ecr.us-east-2.amazonaws.com
+on:
+  push:
+    branches:
+      - main
 
-  build:
-    commands:
-      - echo Building Docker image...
-      - docker build -t aws-instance-repo .
+jobs:
+  build-and-push:
 
-  post_build:
-    commands:
-      - echo Tagging Docker image...
-      - docker tag aws-instance-repo:latest 624858524166.dkr.ecr.us-east-2.amazonaws.com/aws-instance-repo:latest
-      - echo Pushing Docker image...
-      - docker push 624858524166.dkr.ecr.us-east-2.amazonaws.com/aws-instance-repo:latest
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-2
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build Docker image
+        run: docker build -t aws-instance-repo .
+
+      - name: Tag Docker image
+        run: |
+          docker tag aws-instance-repo:latest \
+          624858524166.dkr.ecr.us-east-2.amazonaws.com/aws-instance-repo:latest
+
+      - name: Push Docker image
+        run: |
+          docker push \
+          624858524166.dkr.ecr.us-east-2.amazonaws.com/aws-instance-repo:latest
