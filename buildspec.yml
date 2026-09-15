@@ -1,0 +1,43 @@
+```yaml
+version: 0.2
+
+phases:
+  pre_build:
+    commands:
+      - echo Logging in to Amazon ECR...
+      - aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin 624858524166.dkr.ecr.us-east-2.amazonaws.com
+      - REPOSITORY_URI=624858524166.dkr.ecr.us-east-2.amazonaws.com/aws-instance-repo
+      - IMAGE_TAG=latest
+
+  build:
+    commands:
+      - echo Building Docker image...
+      - docker build -t $REPOSITORY_URI:$IMAGE_TAG .
+
+  post_build:
+    commands:
+      - echo Pushing Docker image to Amazon ECR...
+      - docker push $REPOSITORY_URI:$IMAGE_TAG
+      - echo Docker image pushed successfully.
+```
+
+**Put this file at the root of your GitHub repository:**
+
+```text
+your-repository/
+├── Dockerfile
+├── package.json
+├── server.js
+├── buildspec.yml
+└── .github/
+    └── workflows/
+        └── ci.yml
+```
+
+This buildspec will:
+
+1. Log in to **ECR**
+2. Build your Node.js Docker image
+3. Tag it as `latest`
+4. Push it to:
+   `624858524166.dkr.ecr.us-east-2.amazonaws.com/aws-instance-repo:latest`
